@@ -11,5 +11,15 @@ repository = "https://github.com/invlpg/sdl2-unifont"
 categories = ["gui", "rendering::data-formats"]
 keywords = ["text", "font", "sdl", "unicode", "unifont"]
 
+[features]
+# By default, we include the Basic Multilingual Plane, but not the Supplementary
+# plane. The SMP is generally only useful for emoji support, so only specify the
+# "plane-1" feature if you are expecting to need to render them.
+default = ["plane-0"]
+
+# Features to include the Unicode BMP or SMP
+plane-0 = []
+plane-1 = []
+
 [dependencies]
 sdl2 = "0.31.0"

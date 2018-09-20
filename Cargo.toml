@@ -11,6 +11,8 @@ repository = "https://github.com/invlpg/sdl2-unifont"
 categories = ["gui", "rendering::data-formats"]
 keywords = ["text", "font", "sdl", "unicode", "unifont"]
 
+build = "build.rs"
+
 [features]
 # By default, we include the Basic Multilingual Plane, but not the Supplementary
 # plane. The SMP is generally only useful for emoji support, so only specify the
@@ -23,3 +25,5 @@ plane-1 = []
 
 [dependencies]
 sdl2 = "0.31.0"
+maplit = "1.0.1"
+lazy_static = "1.1.0"

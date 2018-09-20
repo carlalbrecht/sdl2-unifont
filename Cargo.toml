@@ -1,0 +1,15 @@
+[package]
+name = "sdl2-unifont"
+version = "0.1.0"
+
+authors = ["Carl Albrecht <invlpg@protonmail.com>"]
+license = "GPLv3"
+
+description = "Embedded GNU Unifont for Rust SDL programs for simple font rendering tasks"
+repository = "https://github.com/invlpg/sdl2-unifont"
+
+categories = ["gui", "rendering::data-formats"]
+keywords = ["text", "font", "sdl", "unicode", "unifont"]
+
+[dependencies]
+sdl2 = "0.31.0"

@@ -47,8 +47,9 @@ fn gen_font_entries_for(font_file: &Path) -> std::io::Result<String> {
         };
 
         // Append code point to character line
+        font_entry.push_str("0x");
         font_entry.push_str(codepoint);
-        font_entry.push_str(" => { ");
+        font_entry.push_str(" => FontChar { ");
 
         // Determine if we are dealing with a half or full-width character
         let char_width = bitmap.chars().count() / 4;
@@ -103,7 +104,10 @@ fn gen_font_entries(data_dir: &Path) -> std::io::Result<String> {
 /// Creates unifont.rs and writes all constant content into it. Dispatches tasks
 /// to write variable data to unifont.rs.
 fn main() -> std::io::Result<()> {
-    let handlebars = Handlebars::new();
+    let mut handlebars = Handlebars::new();
+
+    // Fix handlebars replacing my >'s with &gt; and breaking builds
+    handlebars.register_escape_fn(|x: &str| String::from(x));
 
     let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let data_dir = Path::new(&project_dir).join("data");

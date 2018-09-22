@@ -1,4 +1,13 @@
-extern crate handlebars;
+extern crate lzma;
+
+use std::env;
+use std::fs::File;
+use std::path::Path;
+use std::io::{Read, Write};
+
+use lzma::reader::LzmaReader;
+
+/*extern crate handlebars;
 
 use std::env;
 use std::fs::File;
@@ -98,13 +107,33 @@ fn gen_font_entries(data_dir: &Path) -> std::io::Result<String> {
         &gen_font_entries_for(&data_dir.join(PLANE_1_FILENAME))?);
 
     Ok(font_entries)
-}
+}*/
 
 
-/// Creates unifont.rs and writes all constant content into it. Dispatches tasks
-/// to write variable data to unifont.rs.
+/// Xzips unifont .hex files for embedding in executable
 fn main() -> std::io::Result<()> {
-    let mut handlebars = Handlebars::new();
+    let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let data_dir = Path::new(&project_dir).join("data");
+
+    let files = [
+        "unifont-11.0.02.hex",
+        "unifont_upper-11.0.02.hex"
+    ];
+
+    for f in files.iter() {
+        let handle = File::open(&data_dir.join(f))?;
+        let mut comp = LzmaReader::new_compressor(handle, 6).unwrap();
+
+        let mut content = Vec::new();
+        comp.read_to_end(&mut content)?;
+
+        let mut out = File::create(&data_dir.join(f).with_extension("hex.xz"))?;
+        out.write_all(&content)?;
+    }
+
+    Ok(())
+
+    /*let mut handlebars = Handlebars::new();
 
     // Fix handlebars replacing my >'s with &gt; and breaking builds
     handlebars.register_escape_fn(|x: &str| String::from(x));
@@ -127,6 +156,5 @@ fn main() -> std::io::Result<()> {
 
     // Replace {{ characters }} handlebar with character data
     handlebars.render_template_source_to_write(&mut unifont_template, &data, font_dest).unwrap();
-
-    Ok(())
+     */
 }

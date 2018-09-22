@@ -16,7 +16,7 @@ build = "build.rs"
 [features]
 # By default, we include the Basic Multilingual Plane, but not the Supplementary
 # plane. The SMP is generally only useful for emoji support, so only specify the
-# "plane-1" feature if you are expecting to need to render them.
+# "plane-1" feature if you are expecting to need to render those.
 default = ["plane-0"]
 
 # Features to include the Unicode BMP or SMP
@@ -25,8 +25,7 @@ plane-1 = []
 
 [dependencies]
 sdl2 = "0.31.0"
-maplit = "1.0.1"
-lazy_static = "1.1.0"
+rust-lzma = "0.3.0"
 
 [build-dependencies]
-handlebars = "1.0.3"
+rust-lzma = "0.3.0"

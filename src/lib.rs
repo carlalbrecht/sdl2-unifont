@@ -1,11 +1,11 @@
 // For unifont.rs
-#[macro_use] extern crate lazy_static;
-#[macro_use] extern crate maplit;
+extern crate lzma;
 
 // For renderer.rs
 extern crate sdl2;
 
 pub mod renderer;
+pub mod unifont;
 
 /* lol what tests?
 #[cfg(test)]

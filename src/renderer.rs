@@ -3,10 +3,6 @@ use sdl2::surface::Surface;
 use sdl2::pixels::PixelFormatEnum;
 
 
-// Include generated font description file
-include!(concat!(env!("OUT_DIR"), "/unifont.rs"));
-
-
 /// Number of vertical pixels in each Unifont character.
 const UNIFONT_HEIGHT: u32 = 16;
 

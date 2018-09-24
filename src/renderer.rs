@@ -1,8 +1,8 @@
-use std::sync::MutexGuard;
-
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
+
+use bit_field::BitField;
 
 use unifont;
 
@@ -36,11 +36,24 @@ impl SurfaceRenderer {
     pub fn draw(&self, text: &str) -> Result<Surface, String> {
         let unifont = get_unifont()?;
 
+        // Create new surface sized to text
         let mut surf = Surface::new(
             count_char_width(unifont, text)? * self.scale,
             UNIFONT_HEIGHT * self.scale,
             PixelFormatEnum::RGBA8888,
         )?;
+
+        // Fill surface with background color
+        surf.fill_rect(None, self.bg_color)?;
+
+        // Start position of next character
+        let mut x_offset = 0;
+
+        let iter = text.chars();
+        for c in iter {
+            // TODO draw characters
+            break;
+        }
 
         Ok(surf)
     }
@@ -63,7 +76,7 @@ impl SurfaceRenderer {
 /// can be utilised. The result of this should be passed to dependent
 /// functions, rather than calling this function again, lest a deadlock
 /// occur.
-fn get_unifont<'a>() -> Result<MutexGuard<'a, unifont::FontChars>, String> {
+fn get_unifont<'a>() -> Result<&'a unifont::FontChars, String> {
     match unifont::get_unifont() {
         Ok(unifont) => Ok(unifont),
         Err(_) => {
@@ -77,7 +90,7 @@ fn get_unifont<'a>() -> Result<MutexGuard<'a, unifont::FontChars>, String> {
 /// if a character is not found in the font (i.e. the feature to include it was
 /// probably not enabled).
 fn count_char_width(
-    unifont: MutexGuard<unifont::FontChars>,
+    unifont: &unifont::FontChars,
     text: &str,
 ) -> Result<u32, String> {
     let mut width_sum: u32 = 0;

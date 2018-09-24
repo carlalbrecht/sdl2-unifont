@@ -9,5 +9,5 @@ fn main() {
     let renderer =
         SurfaceRenderer::new(Color::RGB(255, 255, 255), Color::RGB(0, 0, 0));
 
-    println!("{}", renderer.draw("test").unwrap());
+    println!("{}", renderer.measure_width("test").unwrap());
 }

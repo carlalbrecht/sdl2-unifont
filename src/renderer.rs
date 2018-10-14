@@ -1,8 +1,12 @@
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::Rect;
 use sdl2::surface::Surface;
 
 use bit_field::BitField;
+
+use std::collections::HashMap;
+use std::slice::IterMut;
 
 use unifont;
 
@@ -13,8 +17,13 @@ const UNIFONT_HEIGHT: u32 = 16;
 pub struct SurfaceRenderer {
     /// The colour to use to draw text.
     pub fg_color: Color,
+    /// The foreground colour supplied to the constructor
+    fg_orig: Color,
     /// The colour to use to fill the surface before drawing text.
     pub bg_color: Color,
+    /// The background colour supplied to the constructor
+    bg_orig: Color,
+
     /// Integer scale multiplier, since Unifont is a raster font.
     pub scale: u32,
     /// Whether or not to make text bold. Uses XTerm-style bolding, where the
@@ -30,11 +39,24 @@ impl SurfaceRenderer {
     pub fn new(fg_color: Color, bg_color: Color) -> SurfaceRenderer {
         SurfaceRenderer {
             fg_color,
+            fg_orig: fg_color,
             bg_color,
+            bg_orig: bg_color,
             scale: 1,
             bold: false,
             italic: false,
         }
+    }
+
+    /// Returns the renderer to the state it was in when it was first created
+    /// (i.e. the foreground and background colours are reset to the values
+    /// given to the constructor, and all other fields are reset).
+    pub fn reset(&mut self) {
+        self.fg_color = self.fg_orig;
+        self.bg_color = self.bg_orig;
+        self.scale = 1;
+        self.bold = false;
+        self.italic = false;
     }
 
     /// Draws the supplied text to a new surface, which has been sized to fit
@@ -180,6 +202,165 @@ impl SurfaceRenderer {
         }
 
         Ok(())
+    }
+}
+
+/// Advanced renderer with additional capabilities.
+pub struct FormattedRenderer {
+    /// Stores variables and string literals. The boolean value is set to `true`
+    /// for literals, and `false` for variable name references.
+    text: Vec<(bool, String)>,
+    /// Stores a `SurfaceRenderer` for each entry in the `text` vector.
+    renderers: Vec<SurfaceRenderer>,
+    /// Maps variable names to values.
+    variables: HashMap<String, String>,
+    /// The colour to use behind all text.
+    bg_color: Color,
+    /// The scale to use for all text.
+    scale: u32,
+}
+
+impl FormattedRenderer {
+    /// Creates a new blank `FormattedRenderer`. All segments use the same
+    /// background colour.
+    pub fn new(bg_color: Color) -> FormattedRenderer {
+        FormattedRenderer {
+            text: Vec::new(),
+            renderers: Vec::new(),
+            variables: HashMap::new(),
+            bg_color,
+            scale: 1,
+        }
+    }
+
+    /// Adds a string literal, which cannot be modified once added.
+    pub fn add_text(
+        &mut self,
+        text: &str,
+        color: Color,
+        bold: bool,
+        italic: bool,
+    ) {
+        self.text.push((true, text.to_string()));
+        let mut renderer = SurfaceRenderer::new(color, self.bg_color);
+        renderer.bold = bold;
+        renderer.italic = italic;
+        renderer.scale = self.scale;
+        self.renderers.push(renderer);
+    }
+
+    /// Adds a named variable, which can have its value and formatting changed
+    /// after creation.
+    pub fn add_var(
+        &mut self,
+        name: &str,
+        color: Color,
+        bold: bool,
+        italic: bool,
+    ) {
+        self.text.push((false, name.to_string()));
+        let mut renderer = SurfaceRenderer::new(color, self.bg_color);
+        renderer.bold = bold;
+        renderer.italic = italic;
+        renderer.scale = self.scale;
+        self.renderers.push(renderer);
+        self.variables
+            .insert(name.to_string(), "#UNDEFINED".to_string());
+    }
+
+    /// Sets or modifies the value of an already added variable. If the variable
+    /// referenced does not exist, nothing happens.
+    pub fn set_var(&mut self, name: &str, value: &str) {
+        if self.variables.contains_key(name) {
+            self.variables.insert(name.to_string(), value.to_string());
+        }
+    }
+
+    /// Sets the background color of each component of the formatted output.
+    pub fn set_bg_color(&mut self, bg_color: Color) {
+        self.bg_color = bg_color;
+        for renderer in self.renderers.iter_mut() {
+            renderer.bg_color = bg_color;
+        }
+    }
+
+    /// Sets the scale of each component in the formatted output.
+    pub fn set_scale(&mut self, scale: u32) {
+        self.scale = scale;
+        for renderer in self.renderers.iter_mut() {
+            renderer.scale = scale;
+        }
+    }
+
+    /// Returns an iterator over each renderer, which allows the renderers'
+    /// settings to be modified.
+    pub fn iter_mut(&mut self) -> IterMut<SurfaceRenderer> {
+        self.renderers.iter_mut()
+    }
+
+    /// Sequentially draws each literal and variable, using its associated
+    /// renderer, and concatenates the output surfaces.
+    pub fn draw<'a>(&self) -> Result<Surface<'a>, String> {
+        // Preflight width sum
+        let width = self.measure_width()?;
+
+        // Create output surface
+        let mut surf = Surface::new(
+            width,
+            UNIFONT_HEIGHT * self.scale,
+            PixelFormatEnum::RGBA8888,
+        )?;
+
+        // Draw text
+        let mut offset: u32 = 0;
+        for (text, renderer) in
+            (&self.text).into_iter().zip((&self.renderers).into_iter())
+        {
+            let text = if text.0 {
+                &text.1
+            } else {
+                match self.variables.get(&text.1) {
+                    Some(val) => val,
+                    None => return Err("Undefined variable used".to_string()),
+                }
+            };
+
+            renderer.draw(text)?.blit(
+                None,
+                &mut surf,
+                Rect::new(offset as i32, 0, 0, 0),
+            )?;
+            offset += renderer.measure_width(text)?;
+        }
+
+        Ok(surf)
+    }
+
+    pub fn measure_width(&self) -> Result<u32, String> {
+        let mut width = 0;
+        for (text, renderer) in
+            (&self.text).into_iter().zip((&self.renderers).into_iter())
+        {
+            if text.0 {
+                width += renderer.measure_width(&text.1)?;
+            } else {
+                match self.variables.get(&text.1) {
+                    Some(val) => width += renderer.measure_width(val)?,
+                    None => return Err("Undefined variable used".to_string()),
+                }
+            }
+        }
+
+        Ok(width)
+    }
+}
+
+impl IntoIterator for FormattedRenderer {
+    type Item = SurfaceRenderer;
+    type IntoIter = ::std::vec::IntoIter<SurfaceRenderer>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.renderers.into_iter()
     }
 }
 

@@ -9,8 +9,9 @@ extern crate sdl2_unifont;
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2_unifont::renderer::SurfaceRenderer;
+use sdl2_unifont::renderer::{FormattedRenderer, SurfaceRenderer};
 use std::boxed::Box;
+use std::time::Duration;
 
 /// Rainbow text colours, from back to front
 lazy_static! {
@@ -30,9 +31,16 @@ lazy_static! {
     ];
 }
 
+/// Used for the FormattedRenderer demo to demonstrate persistence and variable
+/// value updating (draws the text draw time string).
+static mut G_FMT_RENDERER: Option<FormattedRenderer> = None;
+
 /// Called from main to draw the demo text objects once at program start.
 /// This function demonstrates the various functionality of the library.
-fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
+fn draw_demo<'a>(
+    iter_num: usize,
+    last_time: Duration,
+) -> sdl2::surface::Surface<'a> {
     // Where we'll blit all of our text surfaces onto
     let mut screen = sdl2::surface::Surface::new(
         800,
@@ -201,6 +209,54 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
             Rect::new((2 + you_size + can_size) as i32, 330, 0, 0),
         ).unwrap();
 
+    /*
+     * Very simple FormattedRenderer demo. Unsafe only because we use a global
+     * variable to demonstrate updating variable values
+     */
+    unsafe {
+        match G_FMT_RENDERER {
+            None => {
+                // Initialise format string first time round
+                let mut renderer =
+                    FormattedRenderer::new(Color::RGBA(0, 0, 0, 0));
+
+                renderer.add_text(
+                    "Text draw time: ",
+                    Color::RGB(0, 0, 0),
+                    false,
+                    false,
+                );
+                renderer.add_var("frametime", Color::RGB(0, 0, 0), true, false);
+                renderer.add_text("ms", Color::RGB(0, 0, 0), true, false);
+
+                G_FMT_RENDERER = Some(renderer);
+            }
+
+            Some(ref mut renderer) => {
+                // Update variable value on subsequent runs
+                renderer.set_var(
+                    "frametime",
+                    &last_time.subsec_millis().to_string(),
+                );
+
+                // Render formatted string
+                renderer
+                    .draw()
+                    .unwrap()
+                    .blit(
+                        None,
+                        &mut screen,
+                        Rect::new(
+                            798 - renderer.measure_width().unwrap() as i32,
+                            600 - 20,
+                            0,
+                            0,
+                        ),
+                    ).unwrap();
+            }
+        }
+    };
+
     // Hand the finished surface back to the render loop for copying to screen
     screen
 }
@@ -210,7 +266,7 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
  */
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::time::Duration;
+use std::time::Instant;
 
 fn main() {
     // SDL initialisers
@@ -236,6 +292,9 @@ fn main() {
 
     // Event / render loop
     let mut iter_num: usize = 0;
+    let mut start: Instant;
+    let mut draw_time: Duration = Duration::new(0, 0);
+
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
         canvas.clear();
@@ -252,8 +311,12 @@ fn main() {
         }
 
         // Draw demo
+        start = Instant::now();
+        let result_surf = draw_demo(iter_num, draw_time);
+        draw_time = Instant::now().duration_since(start);
+
         let demo_tex = texture_creator
-            .create_texture_from_surface(draw_demo(iter_num))
+            .create_texture_from_surface(result_surf)
             .unwrap();
         canvas.copy(&demo_tex, None, None).unwrap();
 

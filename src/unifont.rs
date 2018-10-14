@@ -2,6 +2,9 @@
 /// cargo features. The first time that the font is used, the embedded font
 /// contents are decompressed and parsed into a fast hashmap structure which
 /// makes character lookup quick.
+///
+/// None of the functions here should need to be invoked manually - it is
+/// automatically handled by the renderer.
 use std::boxed::Box;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Cursor, Error, ErrorKind};
@@ -42,7 +45,8 @@ pub struct FontChar {
 /// Decompresses a supplied embedded font file, before parsing the decompressed
 /// result using `initialise_from_str`.
 fn initialise_generic(font: &[u8]) -> Result<(), LzmaError> {
-    // Lock hashmap
+    // Mutate hashmap (we assume that if it's uninitialised, nobody else is
+    // using it anyway)
     let hashmap = unsafe {
         match UNIFONT {
             None => return Err(LzmaError::Other),
@@ -98,7 +102,7 @@ fn initialise_generic(font: &[u8]) -> Result<(), LzmaError> {
         let mut bitmap_i = 0;
 
         for i in 0..char_count / row_width {
-            let line = &bitmap[i..i + row_width];
+            let line = &bitmap[(i * row_width)..(i * row_width) + row_width];
 
             // Convert hex line bit pattern to binary
             bitmap_arr[bitmap_i] = match u16::from_str_radix(line, 16) {

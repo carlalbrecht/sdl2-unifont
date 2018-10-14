@@ -5,9 +5,10 @@ extern crate sdl2;
 extern crate sdl2_unifont;
 
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2_unifont::renderer::SurfaceRenderer;
 
-// Called from main to draw the demo text objects once at program start
+/// Called from main to draw the demo text objects once at program start
 fn draw_demo<'a>() -> sdl2::surface::Surface<'a> {
     // Where we'll blit all of our text surfaces onto
     let mut screen = sdl2::surface::Surface::new(
@@ -17,13 +18,20 @@ fn draw_demo<'a>() -> sdl2::surface::Surface<'a> {
     ).unwrap();
 
     // Used to create surfaces containing rendered text
-    let renderer =
-        SurfaceRenderer::new(Color::RGB(255, 255, 255), Color::RGB(0, 0, 0));
+    let mut renderer =
+        SurfaceRenderer::new(Color::RGB(0, 0, 0), Color::RGB(255, 255, 255));
+    renderer.scale = 1;
 
     renderer
-        .draw("Testing")
+        .draw("We can draw very simple text.")
         .unwrap()
-        .blit(None, &mut screen, None)
+        .blit(None, &mut screen, Rect::new(2, 2, 0, 0))
+        .unwrap();
+
+    renderer
+        .draw("全角文字も対応しています。")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 20, 0, 0))
         .unwrap();
 
     screen

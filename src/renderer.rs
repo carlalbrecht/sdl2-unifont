@@ -92,23 +92,26 @@ impl SurfaceRenderer {
             };
 
             // Draw rows of character bitmap
-            for row in 0..UNIFONT_HEIGHT {
+            for row in 0..UNIFONT_HEIGHT as usize {
                 // Draw each pixel for a row
                 for col in (0..font_char.width as usize).rev() {
                     if font_char.bitmap[row].get_bit(col) {
                         // TODO scaling support
-                        let px_base =
-                            (4 * surf_width * row + 4 * x_offset) as usize;
-                        pixels[px_base] = self.fg_color.r;
-                        pixels[px_base + 1] = self.fg_color.g;
-                        pixels[px_base + 2] = self.fg_color.b;
-                        pixels[px_base + 3] = self.fg_color.a;
+                        let px_base = (4 * surf_width * row as u32
+                            + 4 * x_offset
+                            + 4 * (font_char.width as u32 - col as u32 - 1))
+                            as usize;
+                        // TODO assumes little endian
+                        pixels[px_base + 3] = self.fg_color.r;
+                        pixels[px_base + 2] = self.fg_color.g;
+                        pixels[px_base + 1] = self.fg_color.b;
+                        pixels[px_base] = self.fg_color.a;
                     }
                 }
             }
 
             // Shift next character
-            x_offset += self.scale * font_char.width;
+            x_offset += self.scale * font_char.width as u32;
         }
 
         Ok(())

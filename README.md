@@ -13,7 +13,7 @@ both it's on-disk and in-memory size.
 
 <p align=center>
   <img src="https://raw.githubusercontent.com/invlpg/sdl2-unifont/master/demo.gif">
-  <i>The example program's output</i>
+  <br><i>The example program's output</i>
 </p>
 
 Run the included example, with `cargo run --example demo --features plane-1` to

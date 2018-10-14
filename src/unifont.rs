@@ -24,7 +24,7 @@ const PLANE_0_RAW: &'static [u8] =
 const PLANE_1_RAW: &'static [u8] =
     include_bytes!("../data/unifont_upper-11.0.02.hex.xz");
 
-/// The container type which relates Unicode code points to font character
+/// The container type which relates Unicode code points with font character
 /// definitions.
 pub type FontChars = HashMap<u32, FontChar>;
 
@@ -127,13 +127,11 @@ fn initialise_generic(font: &[u8]) -> Result<(), LzmaError> {
     Ok(())
 }
 
-/// Called the first time that a reference to the `UNIFONT` hashmap is requested
+/// Called the first time that a reference to the `UNIFONT` hashmap is requested,
 /// in order to decompress and parse the embedded, xzipped .hex contents
-fn initialise_unifont() -> Result<(), LzmaError> {
+pub unsafe fn initialise_unifont() -> Result<(), LzmaError> {
     // Initialise UNIFONT variable, since it _should_ be None at the moment
-    unsafe {
-        UNIFONT = Some(Box::new(HashMap::new()));
-    }
+    UNIFONT = Some(Box::new(HashMap::new()));
 
     #[cfg(feature = "plane-0")]
     initialise_generic(PLANE_0_RAW)?;

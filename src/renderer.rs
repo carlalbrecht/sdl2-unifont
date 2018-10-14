@@ -11,17 +11,17 @@ const UNIFONT_HEIGHT: u32 = 16;
 
 /// Storage class for rendering settings.
 pub struct SurfaceRenderer {
-    /// The colour to use to draw the text.
+    /// The colour to use to draw text.
     pub fg_color: Color,
     /// The colour to use to fill the surface before drawing text.
     pub bg_color: Color,
     /// Integer scale multiplier, since Unifont is a raster font.
     pub scale: u32,
     /// Whether or not to make text bold. Uses XTerm-style bolding, where the
-    /// text is just drawn twice on the x-axis, one pixel apart
+    /// text is just drawn twice on the x-axis, one pixel apart.
     pub bold: bool,
     /// Whether or not to make text italicised. Simply shifts pixels to the
-    /// right every two vertical pixels.
+    /// right by one additional pixel, every two vertical pixels.
     pub italic: bool,
 }
 
@@ -37,8 +37,8 @@ impl SurfaceRenderer {
         }
     }
 
-    /// Draws the supplied text to a new surface which has been sized to fit the
-    /// text exactly, using the renderer's style settings. Returns an `Err`
+    /// Draws the supplied text to a new surface, which has been sized to fit
+    /// the text exactly, using the renderer's style settings. Returns an `Err`
     /// result if a character was found which is not in the font, or the font
     /// could not be initialised.
     pub fn draw(&self, text: &str) -> Result<Surface, String> {

@@ -233,7 +233,8 @@ impl FormattedRenderer {
         }
     }
 
-    /// Adds a string literal, which cannot be modified once added.
+    /// Adds a string literal, which cannot be modified once added (i.e. you'll
+    /// need to create a new `FormattedRenderer` instead).
     pub fn add_text(
         &mut self,
         text: &str,
@@ -249,8 +250,8 @@ impl FormattedRenderer {
         self.renderers.push(renderer);
     }
 
-    /// Adds a named variable, which can have its value and formatting changed
-    /// after creation.
+    /// Adds a named variable, which can have its value and changed after
+    /// creation.
     pub fn add_var(
         &mut self,
         name: &str,
@@ -284,12 +285,24 @@ impl FormattedRenderer {
         }
     }
 
+    /// Returns the default background colour for each rendered section (unless
+    /// it's been changed by modifying a renderer's background colour through
+    /// the `iter_mut` method).
+    pub fn get_bg_color(&self) -> Color {
+        return self.bg_color;
+    }
+
     /// Sets the scale of each component in the formatted output.
     pub fn set_scale(&mut self, scale: u32) {
         self.scale = scale;
         for renderer in self.renderers.iter_mut() {
             renderer.scale = scale;
         }
+    }
+
+    /// Gets the current scale factor used for draw operations.
+    pub fn get_scale(&self) -> u32 {
+        return self.scale;
     }
 
     /// Returns an iterator over each renderer, which allows the renderers'
@@ -299,7 +312,7 @@ impl FormattedRenderer {
     }
 
     /// Sequentially draws each literal and variable, using its associated
-    /// renderer, and concatenates the output surfaces.
+    /// renderer, and linearly appends the output surfaces.
     pub fn draw<'a>(&self) -> Result<Surface<'a>, String> {
         // Preflight width sum
         let width = self.measure_width()?;
@@ -336,6 +349,8 @@ impl FormattedRenderer {
         Ok(surf)
     }
 
+    /// Measures the width of all of the contained text, including variable
+    /// values, taking into consideration the formatting of each section.
     pub fn measure_width(&self) -> Result<u32, String> {
         let mut width = 0;
         for (text, renderer) in
@@ -352,6 +367,11 @@ impl FormattedRenderer {
         }
 
         Ok(width)
+    }
+
+    /// Returns the height of all content in the formatted string.
+    pub fn measure_height(&self) -> Result<u32, String> {
+        Ok(self.scale * UNIFONT_HEIGHT)
     }
 }
 

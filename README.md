@@ -1,4 +1,4 @@
-# sdl2-unifont
+# sdl2-unifont [![Latest Version](https://img.shields.io/crates/v/sdl2-unifont.svg)](https://crates.io/crates/sdl2-unifont) [![Documentation](https://docs.rs/sdl2-unifont/badge.svg)](https://docs.rs/sdl2-unifont)
 
 Sometimes, you just need to draw some text in your SDL application, and don't
 need any kind of advanced rendering features. You don't want the hassle of

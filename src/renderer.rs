@@ -34,11 +34,10 @@ impl SurfaceRenderer {
     /// result if a character was found which is not in the font, or the font
     /// could not be initialised.
     pub fn draw(&self, text: &str) -> Result<Surface, String> {
-        let unifont = get_unifont()?;
-
         // Create new surface sized to text
+        let width = count_char_width(text)? * self.scale;
         let mut surf = Surface::new(
-            count_char_width(unifont, text)? * self.scale,
+            width,
             UNIFONT_HEIGHT * self.scale,
             PixelFormatEnum::RGBA8888,
         )?;
@@ -46,13 +45,12 @@ impl SurfaceRenderer {
         // Fill surface with background color
         surf.fill_rect(None, self.bg_color)?;
 
-        // Start position of next character
-        let mut x_offset = 0;
-
-        let iter = text.chars();
-        for c in iter {
-            // TODO draw characters
-            break;
+        // Obtain raw surface data reference, then draw characters of string
+        // through `draw_raw`
+        if surf.must_lock() {
+            surf.with_lock_mut(|px: &mut [u8]| self.draw_raw(px, &width, text))?
+        } else {
+            self.draw_raw(surf.without_lock_mut().unwrap(), &width, text)?
         }
 
         Ok(surf)
@@ -61,21 +59,64 @@ impl SurfaceRenderer {
     /// Sums the width of each character in the supplied text, and multiples the
     /// sum by the renderer's integer scale factor.
     pub fn measure_width(&self, text: &str) -> Result<u32, String> {
-        Ok(self.scale * count_char_width(get_unifont()?, text)?)
+        Ok(self.scale * count_char_width(text)?)
     }
 
     /// May in the future take into consideration newlines and other formatting.
     /// For now, it just returns `16 * scale`, thus, the result of this method
     /// can always be safely `unwrap()`ped.
     pub fn measure_height(&self, _text: &str) -> Result<u32, String> {
-        Ok(self.scale * 16)
+        Ok(self.scale * UNIFONT_HEIGHT)
+    }
+
+    /// Takes an array of pixels and draws the supplied text to it, using the
+    /// specified render options. This function always assumes RGBA8888 pixel
+    /// formatting.
+    fn draw_raw(
+        &self,
+        pixels: &mut [u8],
+        surf_width: &u32,
+        text: &str,
+    ) -> Result<(), String> {
+        let unifont = get_unifont()?;
+
+        // Start position of next character
+        let mut x_offset = 0;
+
+        let iter = text.chars();
+        for c in iter {
+            // Retrieve character description from hashmap
+            let font_char = match unifont.get(&(c as u32)) {
+                None => return Err(gen_missing_char_str(&c)),
+                Some(font_char) => font_char,
+            };
+
+            // Draw rows of character bitmap
+            for row in 0..UNIFONT_HEIGHT {
+                // Draw each pixel for a row
+                for col in (0..font_char.width as usize).rev() {
+                    if font_char.bitmap[row].get_bit(col) {
+                        // TODO scaling support
+                        let px_base =
+                            (4 * surf_width * row + 4 * x_offset) as usize;
+                        pixels[px_base] = self.fg_color.r;
+                        pixels[px_base + 1] = self.fg_color.g;
+                        pixels[px_base + 2] = self.fg_color.b;
+                        pixels[px_base + 3] = self.fg_color.a;
+                    }
+                }
+            }
+
+            // Shift next character
+            x_offset += self.scale * font_char.width;
+        }
+
+        Ok(())
     }
 }
 
 /// Maps `unifont`'s `Result` error type to ours, so that the `?` operator
-/// can be utilised. The result of this should be passed to dependent
-/// functions, rather than calling this function again, lest a deadlock
-/// occur.
+/// can be utilised.
 fn get_unifont<'a>() -> Result<&'a unifont::FontChars, String> {
     match unifont::get_unifont() {
         Ok(unifont) => Ok(unifont),
@@ -89,25 +130,25 @@ fn get_unifont<'a>() -> Result<&'a unifont::FontChars, String> {
 /// character is half-width (8px) or full-width (16px). Returns an error result
 /// if a character is not found in the font (i.e. the feature to include it was
 /// probably not enabled).
-fn count_char_width(
-    unifont: &unifont::FontChars,
-    text: &str,
-) -> Result<u32, String> {
+fn count_char_width(text: &str) -> Result<u32, String> {
+    let unifont = get_unifont()?;
+
     let mut width_sum: u32 = 0;
     let iter = text.chars();
 
     for c in iter {
         match unifont.get(&(c as u32)) {
-            None => {
-                return Err(format!(
-                    "Embedded Unifont does not contain {} (code point: 0x{:x})",
-                    c, c as u32
-                ))
-            }
-
+            None => return Err(gen_missing_char_str(&c)),
             Some(fc) => width_sum += fc.width as u32,
         }
     }
 
     Ok(width_sum)
+}
+
+fn gen_missing_char_str(c: &char) -> String {
+    format!(
+        "Embedded Unifont does not contain {} (code point: 0x{:x})",
+        c, *c as u32
+    )
 }

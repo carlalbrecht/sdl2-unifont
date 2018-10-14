@@ -3,7 +3,7 @@ name = "sdl2-unifont"
 version = "1.0.0"
 
 authors = ["Carl Albrecht <invlpg@protonmail.com>"]
-license = "GPLv3"
+license = "GPL-3.0-or-later"
 
 description = "Embedded GNU Unifont for Rust SDL programs, for simple font rendering tasks"
 repository = "https://github.com/invlpg/sdl2-unifont"

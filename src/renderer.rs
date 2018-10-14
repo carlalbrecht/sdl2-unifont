@@ -43,7 +43,7 @@ impl SurfaceRenderer {
     /// could not be initialised.
     pub fn draw(&self, text: &str) -> Result<Surface, String> {
         // Create new surface sized to text
-        let width = count_char_width(text)? * self.scale;
+        let width = self.measure_width(text)?;
         let mut surf = Surface::new(
             width,
             UNIFONT_HEIGHT * self.scale,
@@ -71,10 +71,10 @@ impl SurfaceRenderer {
         let mut basic_width = self.scale * count_char_width(text)?;
 
         if self.bold {
-            basic_width += 1
+            basic_width += self.scale;
         }
         if self.italic {
-            basic_width += 7
+            basic_width += 8 * self.scale;
         }
 
         Ok(basic_width)
@@ -147,6 +147,36 @@ impl SurfaceRenderer {
 
             // Shift next character
             x_offset += self.scale * font_char.width as u32;
+        }
+
+        // Italicise text
+        if self.italic {
+            let mut offset = (UNIFONT_HEIGHT * self.scale) / 2;
+            for row in 0..UNIFONT_HEIGHT * self.scale as u32 {
+                let row_offset = 4 * row * surf_width;
+                // Shift bytes forward
+                for i in
+                    (row_offset..row_offset + 4 * (surf_width - offset)).rev()
+                {
+                    pixels[(i + 4 * offset) as usize] = pixels[i as usize];
+                }
+
+                // Clear space behind first character
+                for i in (row_offset as usize
+                    ..(row_offset + offset * 4) as usize)
+                    .step_by(4)
+                {
+                    // TODO assumes little endian
+                    pixels[i + 3] = self.bg_color.r;
+                    pixels[i + 2] = self.bg_color.g;
+                    pixels[i + 1] = self.bg_color.b;
+                    pixels[i] = self.bg_color.a;
+                }
+
+                if row % 2 == 1 {
+                    offset -= 1;
+                }
+            }
         }
 
         Ok(())

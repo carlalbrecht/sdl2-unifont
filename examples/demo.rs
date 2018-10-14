@@ -153,6 +153,16 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
         .blit(None, &mut screen, Rect::new(2, 260, 0, 0))
         .unwrap();
 
+    // Italicised and scaled
+    renderer.bold = false;
+    renderer.scale = 3;
+    renderer.bg_color = Color::RGB(255, 255, 0);
+    renderer
+        .draw("Formatting scales, too")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 280, 0, 0))
+        .unwrap();
+
     // Hand the finished surface back to the render loop for copying to screen
     screen
 }

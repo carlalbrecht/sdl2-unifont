@@ -96,16 +96,29 @@ impl SurfaceRenderer {
                 // Draw each pixel for a row
                 for col in (0..font_char.width as usize).rev() {
                     if font_char.bitmap[row].get_bit(col) {
-                        // TODO scaling support
-                        let px_base = (4 * surf_width * row as u32
-                            + 4 * x_offset
-                            + 4 * (font_char.width as u32 - col as u32 - 1))
-                            as usize;
-                        // TODO assumes little endian
-                        pixels[px_base + 3] = self.fg_color.r;
-                        pixels[px_base + 2] = self.fg_color.g;
-                        pixels[px_base + 1] = self.fg_color.b;
-                        pixels[px_base] = self.fg_color.a;
+                        // kill me... we're getting deep now
+                        for x in 0..self.scale {
+                            for y in 0..self.scale {
+                                // Calculate the byte position of the pixel
+                                // (this thing is a mess, to be honest)
+                                let px_base = (4
+                                    * surf_width
+                                    * (row as u32 * self.scale + y)
+                                    + 4 * x_offset
+                                    + 4 * (font_char.width as u32 * self.scale
+                                        - col as u32 * self.scale
+                                        - self.scale)
+                                    + 4 * x)
+                                    as usize;
+
+                                // Insert fg colour into the current pixel
+                                // TODO assumes little endian
+                                pixels[px_base + 3] = self.fg_color.r;
+                                pixels[px_base + 2] = self.fg_color.g;
+                                pixels[px_base + 1] = self.fg_color.b;
+                                pixels[px_base] = self.fg_color.a;
+                            }
+                        }
                     }
                 }
             }

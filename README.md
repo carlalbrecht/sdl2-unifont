@@ -9,6 +9,16 @@ This library embeds the GNU Unifont, xzipped, inside the application binary, and
 decompresses it automatically before use. The library tries somewhat to minimise
 both it's on-disk and in-memory size.
 
+# Getting Started
+Check [here](https://crates.io/crates/sdl2-unifont) for the latest version of
+`sdl2-unifont`.
+
+Or add the following to your `Cargo.toml`:
+```toml
+[dependencies]
+sdl2-unifont = "1.0.1"
+```
+
 # Demo
 
 <p align=center>

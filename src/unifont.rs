@@ -17,12 +17,12 @@ use lzma::LzmaReader;
 #[cfg(feature = "plane-0")]
 /// Contains the raw file contents of the Unifont plane 0 font
 const PLANE_0_RAW: &'static [u8] =
-    include_bytes!("../data/unifont-11.0.02.hex.xz");
+    include_bytes!(concat!(env!("OUT_DIR"), "/unifont-11.0.02.hex.xz"));
 
 #[cfg(feature = "plane-1")]
 /// Contains the raw file contents of the Unifont plane 1 font
 const PLANE_1_RAW: &'static [u8] =
-    include_bytes!("../data/unifont_upper-11.0.02.hex.xz");
+    include_bytes!(concat!(env!("OUT_DIR"), "/unifont_upper-11.0.02.hex.xz"));
 
 /// The container type which relates Unicode code points with font character
 /// definitions.

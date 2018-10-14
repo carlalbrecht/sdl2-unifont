@@ -9,6 +9,9 @@ use lzma::reader::LzmaReader;
 
 /// Xzips unifont .hex files for embedding in executable
 fn main() -> std::io::Result<()> {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let out_path = Path::new(&out_dir);
+
     let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let data_dir = Path::new(&project_dir).join("data");
 
@@ -21,7 +24,7 @@ fn main() -> std::io::Result<()> {
         let mut content = Vec::new();
         comp.read_to_end(&mut content)?;
 
-        let mut out = File::create(&data_dir.join(f).with_extension("hex.xz"))?;
+        let mut out = File::create(&out_path.join(f).with_extension("hex.xz"))?;
         out.write_all(&content)?;
     }
 

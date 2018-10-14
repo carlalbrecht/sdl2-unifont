@@ -12,7 +12,7 @@ use sdl2::rect::Rect;
 use sdl2_unifont::renderer::SurfaceRenderer;
 use std::boxed::Box;
 
-// Rainbow text colours, from back to front
+/// Rainbow text colours, from back to front
 lazy_static! {
     static ref colours: [Box<Color>; 12] = [
         Box::new(Color::RGB(255, 0, 127)),
@@ -30,7 +30,8 @@ lazy_static! {
     ];
 }
 
-/// Called from main to draw the demo text objects once at program start
+/// Called from main to draw the demo text objects once at program start.
+/// This function demonstrates the various functionality of the library.
 fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
     // Where we'll blit all of our text surfaces onto
     let mut screen = sdl2::surface::Surface::new(
@@ -43,6 +44,9 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
     let mut renderer =
         SurfaceRenderer::new(Color::RGB(0, 0, 0), Color::RGB(255, 255, 255));
 
+    /*
+     * Simple demos
+     */
     // The renderer draw method returns a surface, which we can use like any
     // other SDL surface
     renderer
@@ -59,17 +63,29 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
         .unwrap();
 
     // Text can be scaled by integer multiples
-    renderer.scale = 3;
+    renderer.scale = 6;
     renderer
         .draw("BIG text")
         .unwrap()
-        .blit(None, &mut screen, Rect::new(100, 100, 0, 0))
+        .blit(None, &mut screen, Rect::new(2, 80, 0, 0))
         .unwrap();
 
+    renderer.scale = 1;
+    renderer.fg_color = Color::RGB(255, 255, 255);
+    renderer.bg_color = Color::RGB(0, 0, 0);
+    renderer
+        .draw("The background colour can also be changed.")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 180, 0, 0))
+        .unwrap();
+
+    /*
+     * Rainbow text
+     */
     let nc = colours.len();
     // Make text background transparent for overlapping
     renderer.bg_color = Color::RGBA(255, 255, 255, 0);
-
+    renderer.scale = 3;
     // Cycle through colours
     for (i, colour) in colours[iter_num % nc..nc]
         .into_iter()
@@ -93,6 +109,51 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
             ).unwrap();
     }
 
+    /*
+     * Emoji demo - if Unicode plane 1 (SMP) support has been enabled. Also
+     * demonstrates what happens if an unknown character is found in the string.
+     */
+    renderer.fg_color = Color::RGB(0, 0, 0);
+    renderer.scale = 1;
+    match renderer.draw(
+        "🇪🇲🇴🇯🇮 are supported 🔥, as the plane-1 feature is enabled 👌😂🤔") {
+        Ok(surf) => surf.blit(None, &mut screen, Rect::new(2, 200, 0, 0)),
+        Err(_) => renderer
+            .draw("Enable emoji support by running the demo with \
+                   `--features plane-1`")
+            .unwrap()
+            .blit(None, &mut screen, Rect::new(2, 200, 0, 0))
+    }.unwrap();
+
+    /*
+     * Text formatting demos (bold/italic)
+     */
+    // Bold text
+    renderer.bold = true;
+    renderer
+        .draw("Text can be made bold")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 220, 0, 0))
+        .unwrap();
+
+    // Italic text
+    renderer.bold = false;
+    renderer.italic = true;
+    renderer
+        .draw("...or Italicised")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 240, 0, 0))
+        .unwrap();
+
+    // Bold & Italicised
+    renderer.bold = true;
+    renderer
+        .draw("...or both at the same time")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 260, 0, 0))
+        .unwrap();
+
+    // Hand the finished surface back to the render loop for copying to screen
     screen
 }
 

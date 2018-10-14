@@ -17,6 +17,12 @@ pub struct SurfaceRenderer {
     pub bg_color: Color,
     /// Integer scale multiplier, since Unifont is a raster font.
     pub scale: u32,
+    /// Whether or not to make text bold. Uses XTerm-style bolding, where the
+    /// text is just drawn twice on the x-axis, one pixel apart
+    pub bold: bool,
+    /// Whether or not to make text italicised. Simply shifts pixels to the
+    /// right every two vertical pixels.
+    pub italic: bool,
 }
 
 impl SurfaceRenderer {
@@ -26,6 +32,8 @@ impl SurfaceRenderer {
             fg_color,
             bg_color,
             scale: 1,
+            bold: false,
+            italic: false,
         }
     }
 
@@ -57,9 +65,19 @@ impl SurfaceRenderer {
     }
 
     /// Sums the width of each character in the supplied text, and multiples the
-    /// sum by the renderer's integer scale factor.
+    /// sum by the renderer's integer scale factor. Takes into consideration
+    /// formatting options' effects on text width.
     pub fn measure_width(&self, text: &str) -> Result<u32, String> {
-        Ok(self.scale * count_char_width(text)?)
+        let mut basic_width = self.scale * count_char_width(text)?;
+
+        if self.bold {
+            basic_width += 1
+        }
+        if self.italic {
+            basic_width += 7
+        }
+
+        Ok(basic_width)
     }
 
     /// May in the future take into consideration newlines and other formatting.
@@ -96,8 +114,12 @@ impl SurfaceRenderer {
                 // Draw each pixel for a row
                 for col in (0..font_char.width as usize).rev() {
                     if font_char.bitmap[row].get_bit(col) {
-                        // kill me... we're getting deep now
-                        for x in 0..self.scale {
+                        // Double character on x axis if we're bolding
+                        for x in if self.bold {
+                            0..self.scale * 2
+                        } else {
+                            0..self.scale
+                        } {
                             for y in 0..self.scale {
                                 // Calculate the byte position of the pixel
                                 // (this thing is a mess, to be honest)

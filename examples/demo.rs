@@ -172,7 +172,8 @@ fn draw_demo<'a>(
         .unwrap();
 
     /*
-     * Combining text demo
+     * Combining text demo (this is what you have to do if you don't use the
+     * `FormattedRenderer`)
      */
     renderer.italic = false;
     renderer.scale = 1;

@@ -116,7 +116,7 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
     renderer.fg_color = Color::RGB(0, 0, 0);
     renderer.scale = 1;
     match renderer.draw(
-        "🇪🇲🇴🇯🇮 are supported 🔥, as the plane-1 feature is enabled 👌😂🤔") {
+        "🇪🇲🇴🇯🇮 are supported 🔥, as the plane-1 cargo feature is enabled 👌😂🤔") {
         Ok(surf) => surf.blit(None, &mut screen, Rect::new(2, 200, 0, 0)),
         Err(_) => renderer
             .draw("Enable emoji support by running the demo with \
@@ -162,6 +162,44 @@ fn draw_demo<'a>(iter_num: usize) -> sdl2::surface::Surface<'a> {
         .unwrap()
         .blit(None, &mut screen, Rect::new(2, 280, 0, 0))
         .unwrap();
+
+    /*
+     * Combining text demo
+     */
+    renderer.italic = false;
+    renderer.scale = 1;
+    renderer.bg_color = Color::RGB(255, 0, 255);
+    renderer.fg_color = Color::RGB(255, 255, 0);
+    renderer
+    //.draw("You _can_ use whatever colours you want, but just not this. Never this.")
+        .draw("You ")
+        .unwrap()
+        .blit(None, &mut screen, Rect::new(2, 330, 0, 0))
+        .unwrap();
+
+    let you_size = renderer.measure_width("You ").unwrap();
+
+    renderer.italic = true;
+    renderer
+        .draw("can")
+        .unwrap()
+        .blit(
+            None,
+            &mut screen,
+            Rect::new((2 + you_size) as i32, 330, 0, 0),
+        ).unwrap();
+
+    let can_size = renderer.measure_width("can").unwrap();
+
+    renderer.italic = false;
+    renderer
+        .draw(" use whatever colours you want, just not these. Never these.")
+        .unwrap()
+        .blit(
+            None,
+            &mut screen,
+            Rect::new((2 + you_size + can_size) as i32, 330, 0, 0),
+        ).unwrap();
 
     // Hand the finished surface back to the render loop for copying to screen
     screen
@@ -220,7 +258,30 @@ fn main() {
         canvas.copy(&demo_tex, None, None).unwrap();
 
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 24));
+
+        /* Uncomment to write unique frames to directory
+        use sdl2::pixels::PixelFormatEnum;
+        use sdl2::surface::Surface;
+        use std::path::Path;
+        if iter_num < colours.len() {
+            let mut pixels =
+                canvas.read_pixels(None, PixelFormatEnum::RGB888).unwrap();
+            let surf = Surface::from_data(
+                &mut pixels,
+                800,
+                600,
+                3200,
+                PixelFormatEnum::RGB888,
+            ).unwrap();
+            surf.save_bmp(
+                Path::new("[INSERT DIRECTORY PATH HERE]")
+                    .join(format!("0{}", iter_num))
+                    .with_extension("bmp"),
+            ).unwrap();
+        }
+        */
+
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
 
         iter_num += 1;
     }

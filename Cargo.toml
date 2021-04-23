@@ -1,6 +1,6 @@
 [package]
 name = "sdl2-unifont"
-version = "1.0.1"
+version = "1.0.2"
 
 authors = ["Carl Albrecht <invlpg@protonmail.com>"]
 license = "GPL-3.0-or-later"
@@ -25,9 +25,9 @@ plane-0 = []
 plane-1 = []
 
 [dependencies]
-sdl2 = "0.31.0"
 rust-lzma = "0.3.0"
 bit_field = "0.9.0"
+sdl2 = "0.34.4"
 
 [build-dependencies]
 rust-lzma = "0.3.0"

@@ -13,9 +13,9 @@ use sdl2_unifont::renderer::{FormattedRenderer, SurfaceRenderer};
 use std::boxed::Box;
 use std::time::Duration;
 
-/// Rainbow text colours, from back to front
 lazy_static! {
-    static ref colours: [Box<Color>; 12] = [
+    /// Rainbow text colours, from back to front
+    static ref COLOURS: [Box<Color>; 12] = [
         Box::new(Color::RGB(255, 0, 127)),
         Box::new(Color::RGB(255, 0, 255)),
         Box::new(Color::RGB(127, 0, 255)),
@@ -90,14 +90,14 @@ fn draw_demo<'a>(
     /*
      * Rainbow text
      */
-    let nc = colours.len();
+    let nc = COLOURS.len();
     // Make text background transparent for overlapping
     renderer.bg_color = Color::RGBA(255, 255, 255, 0);
     renderer.scale = 3;
     // Cycle through colours
-    for (i, colour) in colours[iter_num % nc..nc]
+    for (i, colour) in COLOURS[iter_num % nc..nc]
         .into_iter()
-        .chain(colours[0..iter_num % nc].into_iter())
+        .chain(COLOURS[0..iter_num % nc].into_iter())
         .enumerate()
     {
         // Text colour can be changed per-draw operation
@@ -327,7 +327,7 @@ fn main() {
         use sdl2::pixels::PixelFormatEnum;
         use sdl2::surface::Surface;
         use std::path::Path;
-        if iter_num < colours.len() {
+        if iter_num < COLOURS.len() {
             let mut pixels =
                 canvas.read_pixels(None, PixelFormatEnum::RGB888).unwrap();
             let surf = Surface::from_data(

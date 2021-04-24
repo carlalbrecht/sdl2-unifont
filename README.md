@@ -16,7 +16,7 @@ Check [here](https://crates.io/crates/sdl2-unifont) for the latest version of
 Or add the following to your `Cargo.toml`:
 ```toml
 [dependencies]
-sdl2-unifont = "1.0.1"
+sdl2-unifont = "1.0.2"
 ```
 
 # Demo
@@ -41,12 +41,12 @@ fn main() {
     // Red text with transparent background
     let mut renderer =
         SurfaceRenderer::new(Color::RGB(255, 0, 0), Color::RGBA(0, 0, 0, 0));
-        
+
     // Draw text to a surface, which can be used like any other. .draw() returns
     // an error result if the string contains a character which is not in the
     // Unifont.
     let surface = renderer.draw("Sample Text").unwrap();
-    
+
     // Renderer simply holds state for producing new text surfaces
     renderer.bg_color = Color::RGB(255, 255, 0);
     renderer.bold = true;

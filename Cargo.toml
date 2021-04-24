@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 
 description = "Embedded GNU Unifont for Rust SDL programs, for simple font rendering tasks"
 readme = "README.md"
-repository = "https://github.com/invlpg/sdl2-unifont"
+repository = "https://github.com/carlalbrecht/sdl2-unifont"
 
 categories = ["gui", "rendering::data-formats"]
 keywords = ["text", "font", "sdl", "unicode", "unifont"]
